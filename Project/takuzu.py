@@ -38,10 +38,30 @@ class Board:
         respectivamente."""
         return (self.get_number(row+1, col) if row < (self.get_dimension_len(0)-1) else None, self.get_number(row-1, col) if row > 0 else None)
 
+    def top_adjacent_numbers(self, row: int, col: int) -> (int, int):
+        """Devolve os valores imediatamente abaixo e acima,
+        respectivamente."""
+        return (self.get_number(row+2, col) if row < (self.get_dimension_len(0)-2) else None, self.get_number(row+1, col) if row < (self.get_dimension_len(0)-1) else None)
+
+    def bottom_adjacent_numbers(self, row: int, col: int) -> (int, int):
+        """Devolve os valores imediatamente abaixo e acima,
+        respectivamente."""
+        return (self.get_number(row-1, col) if row > 0 else None, self.get_number(row-2, col) if row > 1 else None)
+
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
         return (self.get_number(row, col-1) if col > 0 else None, self.get_number(row, col+1) if col < (self.get_dimension_len(1)-1) else None)
+
+    def left_adjacent_numbers(self, row: int, col: int) -> (int, int):
+        """Devolve os valores imediatamente à esquerda e à direita,
+        respectivamente."""
+        return (self.get_number(row, col-2) if col > 1 else None, self.get_number(row, col-1) if col > 0 else None)
+
+    def right_adjacent_numbers(self, row: int, col: int) -> (int, int):
+        """Devolve os valores imediatamente à esquerda e à direita,
+        respectivamente."""
+        return (self.get_number(row, col+1) if col < (self.get_dimension_len(1)-1) else None, self.get_number(row, col+2) if col < (self.get_dimension_len(1)-2) else None)
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -56,11 +76,13 @@ class Board:
         """
         line = stdin.readline()
         dimension = eval(line[:-1])
+        #print(dimension)
         board = np.empty((0, dimension), int)
 
         for _ in range(dimension):
             line = stdin.readline()
-            line_array = [np.fromstring(line[:-1], int, sep='\t')]
+            #print(line)
+            line_array = [np.fromstring(line, int, sep='\t')]
             board = np.append(board, line_array, axis=0)
         
         return Board(board)
@@ -75,6 +97,142 @@ class Board:
 
     def __repr__(self) -> str:
         return '\n'.join(['\t'.join(['{}'.format(number) for number in row]) for row in self.array])
+
+    def is_full(self):
+        return 2 not in self.array
+
+    def is_valid(self):
+        dimension_zero = self.get_dimension_len(0)
+        dimension_one = self.get_dimension_len(1)
+        for i in range(dimension_zero):
+            sumLine = 0
+            full = True
+            for j in range(dimension_one):
+                num = self.get_number(i, j)
+                if num == 2:
+                    full = False
+                if num != 2:
+                    sumLine += num
+                    if (j > 0 and j < dimension_one-1):
+                        adjacent = self.adjacent_horizontal_numbers(i, j)
+                        if (num == adjacent[0] and num == adjacent[1]):
+                            return False
+
+            if full:
+                if (dimension_one % 2 == 0):
+                    if (sumLine != dimension_one//2):
+                        return False
+                else:
+                    if (sumLine != (dimension_one//2)+1 and sumLine != (dimension_one//2)):
+                        return False
+
+                for n in range(i+1, dimension_zero):
+                    if np.array_equal(self.array[i], self.array[n]):
+                        return False
+
+            else:
+                if (dimension_one % 2 == 0):
+                    if (sumLine > dimension_one//2):
+                        return False
+                else:
+                    if (sumLine > (dimension_one//2)+1):
+                        return False
+            
+        return True
+
+
+    def adjacent_rule(self):
+        dimension_zero = board.get_dimension_len(0)
+        dimension_one = board.get_dimension_len(1)
+        for i in range(dimension_zero):
+            for j in range(dimension_one):
+                if self.get_number(i, j) == 2:
+                    adjacent_horizontal = self.adjacent_horizontal_numbers(i, j)
+                    if adjacent_horizontal == (0, 0):
+                        return (i, j, 1)
+                    elif adjacent_horizontal == (1, 1):
+                        return (i, j, 0)
+                    left_horizontal = self.left_adjacent_numbers(i, j)
+                    if left_horizontal == (0, 0):
+                        return (i, j, 1)
+                    elif left_horizontal == (1, 1):
+                        return (i, j, 0)
+                    right_horizontal = self.right_adjacent_numbers(i, j)
+                    if right_horizontal == (0, 0):
+                        return (i, j, 1)
+                    elif right_horizontal == (1, 1):
+                        return (i, j, 0)
+
+                    adjacent_vertical = self.adjacent_vertical_numbers(i, j)
+                    if adjacent_vertical == (0, 0):
+                        return (i, j, 1)
+                    elif adjacent_vertical == (1, 1):
+                        return (i, j, 0)
+                    top_vertical = self.top_adjacent_numbers(i, j)
+                    if top_vertical == (0, 0):
+                        return (i, j, 1)
+                    elif top_vertical == (1, 1):
+                        return (i, j, 0)
+                    bottom_vertical = self.bottom_adjacent_numbers(i, j)
+                    if bottom_vertical == (0, 0):
+                        return (i, j, 1)
+                    elif bottom_vertical == (1, 1):
+                        return (i, j, 0)
+        
+        return False
+
+    def sum_rule_lines_columns(self):
+        res = self.sum_rule()
+        if res:
+            return res
+        res = Board(np.transpose(self.array)).sum_rule()
+        if res:
+            return (res[1], res[0], res[2])
+        return False
+
+    def sum_rule(self):
+        dimension_zero = self.get_dimension_len(0)
+        dimension_one = self.get_dimension_len(1)
+        for i in range(dimension_zero):
+            num_zeros = 0
+            num_ones = 0
+            free_positions = []
+            for j in range(dimension_one):
+                num = self.get_number(i, j)
+                if num == 0:
+                    num_zeros += 1
+                elif num == 1:
+                    num_ones += 1
+                else:
+                    free_positions += [(i, j)]
+            if dimension_zero % 2 == 0:
+                if num_ones == dimension_zero//2:
+                    if len(free_positions) > 0:
+                        return (free_positions[0][0], free_positions[0][1], 0)
+                elif num_zeros == dimension_zero//2:
+                    if len(free_positions) > 0:
+                        return (free_positions[0][0], free_positions[0][1], 1)
+            else:
+                if num_ones == dimension_zero//2 + 1:
+                    if len(free_positions) > 0:
+                        return (free_positions[0][0], free_positions[0][1], 0)
+                elif num_zeros == dimension_zero//2 + 1:
+                    if len(free_positions) > 0:
+                        return (free_positions[0][0], free_positions[0][1], 1)
+
+        return False
+
+    def get_first_available_actions(self):
+        dimension_zero = board.get_dimension_len(0)
+        dimension_one = board.get_dimension_len(1)
+        for i in range(dimension_zero):
+            for j in range(dimension_one):
+                if self.get_number(i, j) == 2:
+                    return [(i, j, 0), (i, j, 1)]
+        #print("False.......")
+        return False
+
+    
     
 
 class TakuzuState:
@@ -92,33 +250,19 @@ class TakuzuState:
         return TakuzuState(self.board.resulting_board(action[0], action[1], action[2]))
 
     def is_goal_state(self) -> bool:
-        return self.check_conditions(self.board) and self.check_conditions(Board(np.transpose(self.board.array)))
+        #print("testing goal")
+        return self.board.is_full() and self.board.is_valid() and Board(np.transpose(self.board.array)).is_valid()
 
-    def check_conditions(self, board: Board) -> bool:
-        dimension_zero = board.get_dimension_len(0)
-        dimension_one = board.get_dimension_len(1)
-        for i in range(dimension_zero):
-            sumLine = 0
-            for j in range(dimension_one):
-                num = board.get_number(i, j)
-                if num == 2:
-                    return False
-                sumLine += num
-                if (j > 0 and j < dimension_one-1):
-                    adjacent = board.adjacent_horizontal_numbers(i, j)
-                    if (num == adjacent[0] and num == adjacent[1]):
-                        return False
-            if (dimension_one % 2 == 0):
-                if (sumLine != dimension_one//2):
-                    return False
-            else:
-                if (sumLine != (dimension_one//2)+1 or sumLine != (dimension_one//2)):
-                    return False
-            
-            for n in range(i+1, dimension_zero):
-                if np.array_equal(board.array[i], board.array[n]):
-                    return False
-        return True
+    def adjacent_rule_actions(self):
+        return self.board.adjacent_rule()
+
+    def sum_rule_actions(self):
+        return self.board.sum_rule_lines_columns()
+
+    def get_first_empty_position_actions(self):
+        return self.board.get_first_available_actions()
+
+
        
 
 class Takuzu(Problem):
@@ -130,7 +274,25 @@ class Takuzu(Problem):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
         # TODO
-        pass
+        #print("---------------\n")
+        #print(state.board)
+        if not state.board.is_valid():
+            #print("tou lixado")
+            return []
+        elif not Board(np.transpose(state.board.array)).is_valid():
+            return []
+
+        #print("vou testar")
+        result = state.adjacent_rule_actions()
+        if result:
+            return [result]
+        result = state.sum_rule_actions()
+        if result:
+            return [result]
+        result = state.get_first_empty_position_actions()
+        #print(state.board)
+        #print("vou ao calhas")
+        return result
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -159,26 +321,30 @@ if __name__ == "__main__":
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    pass
+    board = Board.parse_instance_from_stdin()
+    problem = Takuzu(board)
+    goal_node = depth_first_tree_search(problem)
+    print(goal_node.state.board)
 
 
-board = Board.parse_instance_from_stdin()
-problem = Takuzu(board)
-s0 = TakuzuState(board)
-print("Initial:\n", s0.board, sep="")
+#board = Board.parse_instance_from_stdin()
+#problem = Takuzu(board)
+#s0 = TakuzuState(board)
+# problem.actions(s0)
+#print("Initial:\n", s0.board, sep="")
 
-s1 = problem.result(s0, (0, 0, 0))
-s2 = problem.result(s1, (0, 2, 1))
-s3 = problem.result(s2, (1, 0, 1))
-s4 = problem.result(s3, (1, 1, 0))
-s5 = problem.result(s4, (1, 3, 1))
-s6 = problem.result(s5, (2, 0, 0))
-s7 = problem.result(s6, (2, 2, 1))
-s8 = problem.result(s7, (2, 3, 1))
-s9 = problem.result(s8, (3, 2, 0))
+#s1 = problem.result(s0, (0, 0, 0))
+#s2 = problem.result(s1, (0, 2, 1))
+#s3 = problem.result(s2, (1, 0, 1))
+#s4 = problem.result(s3, (1, 1, 0))
+#s5 = problem.result(s4, (1, 3, 1))
+#s6 = problem.result(s5, (2, 0, 0))
+#s7 = problem.result(s6, (2, 2, 1))
+#s8 = problem.result(s7, (2, 3, 1))
+#s9 = problem.result(s8, (3, 2, 0))
 
-print("Is goal?", problem.goal_test(s9))
-print("Solution:\n", s9.board, sep="")
+#print("Is goal?", problem.goal_test(s9))
+#print("Solution:\n", s9.board, sep="")
 
 
 # board1 = board.resulting_board(0, 0, 0)
