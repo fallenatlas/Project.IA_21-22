@@ -18,6 +18,8 @@ from search import (
     depth_first_tree_search,
     greedy_search,
     recursive_best_first_search,
+    compare_searchers,
+    compare_graph_searchers,
 )
 
 class Board:
@@ -181,6 +183,61 @@ class Board:
         
         return False
 
+    def adjacent_rule_h(self):
+        dimension_zero = board.get_dimension_len(0)
+        dimension_one = board.get_dimension_len(1)
+        total = 0
+        l = 0
+        for i in range(dimension_zero):
+            for j in range(dimension_one):
+                if self.get_number(i, j) == 2:
+                    total += 1
+                    adjacent_horizontal = self.adjacent_horizontal_numbers(i, j)
+                    if adjacent_horizontal == (0, 0):
+                        l += 1
+                        continue
+                    elif adjacent_horizontal == (1, 1):
+                        l += 1
+                        continue
+                    left_horizontal = self.left_adjacent_numbers(i, j)
+                    if left_horizontal == (0, 0):
+                        l += 1
+                        continue
+                    elif left_horizontal == (1, 1):
+                        l += 1
+                        continue
+                    right_horizontal = self.right_adjacent_numbers(i, j)
+                    if right_horizontal == (0, 0):
+                        l += 1
+                        continue
+                    elif right_horizontal == (1, 1):
+                        l += 1
+                        continue
+
+                    adjacent_vertical = self.adjacent_vertical_numbers(i, j)
+                    if adjacent_vertical == (0, 0):
+                        l += 1
+                        continue
+                    elif adjacent_vertical == (1, 1):
+                        l += 1
+                        continue
+                    top_vertical = self.top_adjacent_numbers(i, j)
+                    if top_vertical == (0, 0):
+                        l += 1
+                        continue
+                    elif top_vertical == (1, 1):
+                        l += 1
+                        continue
+                    bottom_vertical = self.bottom_adjacent_numbers(i, j)
+                    if bottom_vertical == (0, 0):
+                        l += 1
+                        continue
+                    elif bottom_vertical == (1, 1):
+                        l += 1
+                        continue
+        
+        return total-l
+
     def sum_rule_lines_columns(self):
         res = self.sum_rule()
         if res:
@@ -262,6 +319,9 @@ class TakuzuState:
     def get_first_empty_position_actions(self):
         return self.board.get_first_available_actions()
 
+    def get_h(self):
+        return self.board.adjacent_rule_h()
+
 
        
 
@@ -310,7 +370,7 @@ class Takuzu(Problem):
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
         # TODO
-        pass
+        return node.state.get_h()
 
     # TODO: outros metodos da classe
 
@@ -321,10 +381,13 @@ if __name__ == "__main__":
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
+    
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    goal_node = depth_first_tree_search(problem)
-    print(goal_node.state.board)
+    #goal_node = depth_first_tree_search(problem)
+    #print(goal_node.state.board)
+
+    compare_searchers(problems=[problem], header=['Procura', 'Results'])
 
 
 #board = Board.parse_instance_from_stdin()
