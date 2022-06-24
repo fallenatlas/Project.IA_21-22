@@ -78,18 +78,14 @@ class Board:
         """
         line = stdin.readline()
         dimension = eval(line[:-1])
-        #print(dimension)
         board = np.empty((0, dimension), int)
 
         for _ in range(dimension):
             line = stdin.readline()
-            #print(line)
             line_array = [np.fromstring(line, int, sep='\t')]
             board = np.append(board, line_array, axis=0)
         
         return Board(board)
-
-    # TODO: outros metodos da classe
 
     def resulting_board(self, row: int, col: int, val: int):
         new_array = np.copy(self.array)
@@ -286,7 +282,6 @@ class Board:
             for j in range(dimension_one):
                 if self.get_number(i, j) == 2:
                     return [(i, j, 0), (i, j, 1)]
-        #print("False.......")
         return False
 
     
@@ -307,7 +302,6 @@ class TakuzuState:
         return TakuzuState(self.board.resulting_board(action[0], action[1], action[2]))
 
     def is_goal_state(self) -> bool:
-        #print("testing goal")
         return self.board.is_full() and self.board.is_valid() and Board(np.transpose(self.board.array)).is_valid()
 
     def adjacent_rule_actions(self):
@@ -333,16 +327,11 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        #print("---------------\n")
-        #print(state.board)
         if not state.board.is_valid():
-            #print("tou lixado")
             return []
         elif not Board(np.transpose(state.board.array)).is_valid():
             return []
 
-        #print("vou testar")
         result = state.adjacent_rule_actions()
         if result:
             return [result]
@@ -350,8 +339,6 @@ class Takuzu(Problem):
         if result:
             return [result]
         result = state.get_first_empty_position_actions()
-        #print(state.board)
-        #print("vou ao calhas")
         return result
 
     def result(self, state: TakuzuState, action):
@@ -369,49 +356,15 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        # TODO
         return node.state.get_h()
-
-    # TODO: outros metodos da classe
 
 
 if __name__ == "__main__":
-    # TODO:
     # Ler o ficheiro de input de sys.argv[1],
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    #goal_node = depth_first_tree_search(problem)
-    #print(goal_node.state.board)
-
-    compare_searchers(problems=[problem], header=['Procura', 'Results'])
-
-
-#board = Board.parse_instance_from_stdin()
-#problem = Takuzu(board)
-#s0 = TakuzuState(board)
-# problem.actions(s0)
-#print("Initial:\n", s0.board, sep="")
-
-#s1 = problem.result(s0, (0, 0, 0))
-#s2 = problem.result(s1, (0, 2, 1))
-#s3 = problem.result(s2, (1, 0, 1))
-#s4 = problem.result(s3, (1, 1, 0))
-#s5 = problem.result(s4, (1, 3, 1))
-#s6 = problem.result(s5, (2, 0, 0))
-#s7 = problem.result(s6, (2, 2, 1))
-#s8 = problem.result(s7, (2, 3, 1))
-#s9 = problem.result(s8, (3, 2, 0))
-
-#print("Is goal?", problem.goal_test(s9))
-#print("Solution:\n", s9.board, sep="")
-
-
-# board1 = board.resulting_board(0, 0, 0)
-# print("Old Board:\n", board, sep="")
-# print("New Board:\n", result_state.board, sep="")
-# print(board.adjacent_horizontal_numbers(2, 2))
-# print(board.adjacent_vertical_numbers(2, 2))
+    goal_node = depth_first_tree_search(problem)
+    print(goal_node.state.board)
