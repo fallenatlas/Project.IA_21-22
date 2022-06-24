@@ -33,6 +33,7 @@ class Board:
         return self.array[row, col]
 
     def get_dimension_len(self, dimension: int) -> int:
+        """Devolve a dimensao do tabuleiro."""
         return self.array.shape[dimension]
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
@@ -41,13 +42,11 @@ class Board:
         return (self.get_number(row+1, col) if row < (self.get_dimension_len(0)-1) else None, self.get_number(row-1, col) if row > 0 else None)
 
     def top_adjacent_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente abaixo e acima,
-        respectivamente."""
+        """Devolve os 2 valores imediatamente acima."""
         return (self.get_number(row+2, col) if row < (self.get_dimension_len(0)-2) else None, self.get_number(row+1, col) if row < (self.get_dimension_len(0)-1) else None)
 
     def bottom_adjacent_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente abaixo e acima,
-        respectivamente."""
+        """Devolve os 2 valores imediatamente abaixo."""
         return (self.get_number(row-1, col) if row > 0 else None, self.get_number(row-2, col) if row > 1 else None)
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
@@ -56,13 +55,11 @@ class Board:
         return (self.get_number(row, col-1) if col > 0 else None, self.get_number(row, col+1) if col < (self.get_dimension_len(1)-1) else None)
 
     def left_adjacent_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente à esquerda e à direita,
-        respectivamente."""
+        """Devolve os 2 valores imediatamente à esquerda."""
         return (self.get_number(row, col-2) if col > 1 else None, self.get_number(row, col-1) if col > 0 else None)
 
     def right_adjacent_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente à esquerda e à direita,
-        respectivamente."""
+        """Devolve os 2 valores imediatamente à direita."""
         return (self.get_number(row, col+1) if col < (self.get_dimension_len(1)-1) else None, self.get_number(row, col+2) if col < (self.get_dimension_len(1)-2) else None)
 
     @staticmethod
@@ -87,7 +84,10 @@ class Board:
         
         return Board(board)
 
+
     def resulting_board(self, row: int, col: int, val: int):
+        """Devolve um novo tabuleiro resultante 
+        de preencher a posicao (row, col) com val."""
         new_array = np.copy(self.array)
         new_array[row, col] = val
 
@@ -96,15 +96,19 @@ class Board:
     def __repr__(self) -> str:
         return '\n'.join(['\t'.join(['{}'.format(number) for number in row]) for row in self.array])
 
-    def is_full(self):
+    def is_complete(self):
+        """ Devolve TRUE se tabuleiro estiver completo."""
         return 2 not in self.array
 
-    def is_valid(self):
+    def is_consistent(self):
+        """ Devolve TRUE se tabuleiro estiver de acordo
+        com as regras."""
         dimension_zero = self.get_dimension_len(0)
         dimension_one = self.get_dimension_len(1)
         for i in range(dimension_zero):
             sumLine = 0
             full = True
+            # Verificar regra dos 3 valores terem que ser diferentes
             for j in range(dimension_one):
                 num = self.get_number(i, j)
                 if num == 2:
@@ -115,7 +119,8 @@ class Board:
                         adjacent = self.adjacent_horizontal_numbers(i, j)
                         if (num == adjacent[0] and num == adjacent[1]):
                             return False
-
+            # Verificar proporção de 0 e 1
+            # Verificar colunas e linhas diferentes
             if full:
                 if (dimension_one % 2 == 0):
                     if (sumLine != dimension_one//2):
@@ -140,6 +145,8 @@ class Board:
 
 
     def adjacent_rule(self):
+        """Devolve primeira posicao e valor que se consegue inferir
+        pela regra das adjacencias"""
         dimension_zero = board.get_dimension_len(0)
         dimension_one = board.get_dimension_len(1)
         for i in range(dimension_zero):
@@ -180,6 +187,7 @@ class Board:
         return False
 
     def adjacent_rule_h(self):
+        """Calcula heuristica"""
         dimension_zero = board.get_dimension_len(0)
         dimension_one = board.get_dimension_len(1)
         total = 0
@@ -235,6 +243,9 @@ class Board:
         return total-l
 
     def sum_rule_lines_columns(self):
+        """Devolve primeira posicao e valor que se consegue inferir
+        pela regra da proporcao de 0 e 1, verificando as linhas e de
+        seguida as colunas"""
         res = self.sum_rule()
         if res:
             return res
@@ -244,6 +255,8 @@ class Board:
         return False
 
     def sum_rule(self):
+        """Devolve primeira posicao e valor que se consegue inferir
+        pela regra da proporcao de 0 e 1"""
         dimension_zero = self.get_dimension_len(0)
         dimension_one = self.get_dimension_len(1)
         for i in range(dimension_zero):
@@ -276,6 +289,7 @@ class Board:
         return False
 
     def get_first_available_actions(self):
+        """Devolve primeira posicao livre"""
         dimension_zero = board.get_dimension_len(0)
         dimension_one = board.get_dimension_len(1)
         for i in range(dimension_zero):
@@ -302,7 +316,7 @@ class TakuzuState:
         return TakuzuState(self.board.resulting_board(action[0], action[1], action[2]))
 
     def is_goal_state(self) -> bool:
-        return self.board.is_full() and self.board.is_valid() and Board(np.transpose(self.board.array)).is_valid()
+        return self.board.is_complete() and self.board.is_consistent() and Board(np.transpose(self.board.array)).is_consistent()
 
     def adjacent_rule_actions(self):
         return self.board.adjacent_rule()
@@ -327,11 +341,12 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        if not state.board.is_valid():
+        #Verificar que tabuleiro continua a respeitar as regras
+        if not state.board.is_consistent():
             return []
-        elif not Board(np.transpose(state.board.array)).is_valid():
+        elif not Board(np.transpose(state.board.array)).is_consistent():
             return []
-
+        # Tentar inferir
         result = state.adjacent_rule_actions()
         if result:
             return [result]
@@ -339,6 +354,7 @@ class Takuzu(Problem):
         if result:
             return [result]
         result = state.get_first_empty_position_actions()
+        #print("vou ao calhas")
         return result
 
     def result(self, state: TakuzuState, action):
@@ -360,11 +376,9 @@ class Takuzu(Problem):
 
 
 if __name__ == "__main__":
-    # Ler o ficheiro de input de sys.argv[1],
-    # Usar uma técnica de procura para resolver a instância,
-    # Retirar a solução a partir do nó resultante,
-    # Imprimir para o standard output no formato indicado.
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
     goal_node = depth_first_tree_search(problem)
     print(goal_node.state.board)
+
+    #compare_searchers(problems=[problem], header=['Procura', 'Results'])
