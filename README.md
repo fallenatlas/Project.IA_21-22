@@ -3,4 +3,4 @@ IA (Artificial Inteligence) Project (21-22) @ IST ~ Computer Science
 
 Language: Python
 
-Grade: To determine
+Grade: 19.75/20
